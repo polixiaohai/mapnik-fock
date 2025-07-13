@@ -45,6 +45,7 @@ layer::layer(std::string const& _name, std::string const& _srs)
     , ds_()
     , buffer_size_()
     , maximum_extent_()
+    , extra_params_() 
     , comp_op_()
     , opacity_(1.0f)
 {}
@@ -64,6 +65,7 @@ layer::layer(layer const& rhs)
     , ds_(rhs.ds_)
     , buffer_size_(rhs.buffer_size_)
     , maximum_extent_(rhs.maximum_extent_)
+    , extra_params_(rhs.extra_params_)
     , comp_op_(rhs.comp_op_)
     , opacity_(rhs.opacity_)
 {}
@@ -83,6 +85,7 @@ layer::layer(layer&& rhs)
     , ds_(std::move(rhs.ds_))
     , buffer_size_(std::move(rhs.buffer_size_))
     , maximum_extent_(std::move(rhs.maximum_extent_))
+    , extra_params_(std::move(rhs.extra_params_))
     , comp_op_(std::move(rhs.comp_op_))
     , opacity_(std::move(rhs.opacity_))
 {}
@@ -103,6 +106,7 @@ layer& layer::operator=(layer rhs)
     std::swap(this->ds_, rhs.ds_);
     std::swap(this->buffer_size_, rhs.buffer_size_);
     std::swap(this->maximum_extent_, rhs.maximum_extent_);
+    std::swap(this->extra_params_, rhs.extra_params_);
     std::swap(this->comp_op_, rhs.comp_op_);
     std::swap(this->opacity_, rhs.opacity_);
     return *this;
@@ -115,7 +119,8 @@ bool layer::operator==(layer const& rhs) const
            (queryable_ == rhs.queryable_) && (clear_label_cache_ == rhs.clear_label_cache_) &&
            (cache_features_ == rhs.cache_features_) && (group_by_ == rhs.group_by_) && (styles_ == rhs.styles_) &&
            ((ds_ && rhs.ds_) ? *ds_ == *rhs.ds_ : ds_ == rhs.ds_) && (buffer_size_ == rhs.buffer_size_) &&
-           (maximum_extent_ == rhs.maximum_extent_) && (comp_op_ == rhs.comp_op_) && (opacity_ == rhs.opacity_);
+           (maximum_extent_ == rhs.maximum_extent_) && (extra_params_ == rhs.extra_params_) && 
+           (comp_op_ == rhs.comp_op_) && (opacity_ == rhs.opacity_);
 }
 
 layer::~layer() {}
@@ -260,6 +265,21 @@ box2d<double> layer::envelope() const
     if (ds_)
         return ds_->envelope();
     return box2d<double>();
+}
+
+void layer::set_extra_parameters(parameters &params)
+{
+    extra_params_ = params;
+}
+
+parameters &layer::get_extra_parameters()
+{
+    return extra_params_;
+}
+
+parameters const &layer::get_extra_parameters() const
+{
+    return extra_params_;
 }
 
 void layer::set_clear_label_cache(bool clear)

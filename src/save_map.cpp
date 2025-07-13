@@ -21,53 +21,50 @@
  *****************************************************************************/
 
 // mapnik
-#include <mapnik/rule.hpp>
-#include <mapnik/datasource.hpp>
-#include <mapnik/layer.hpp>
-#include <mapnik/feature_type_style.hpp>
-#include <mapnik/debug.hpp>
-#include <mapnik/save_map.hpp>
+// #include <mapnik/rule.hpp>
+// #include <mapnik/datasource.hpp>
+// #include <mapnik/layer.hpp>
+// #include <mapnik/feature_type_style.hpp>
+// #include <mapnik/debug.hpp>
+//#include <mapnik/save_map.hpp>
+#include <mapnik/save_map_serialize.hpp>
 #include <mapnik/map.hpp>
-#include <mapnik/symbolizer.hpp>
-#include <mapnik/ptree_helpers.hpp>
-#include <mapnik/expression_string.hpp>
-#include <mapnik/raster_colorizer.hpp>
-#include <mapnik/text/placements/simple.hpp>
-#include <mapnik/text/placements/list.hpp>
-#include <mapnik/text/placements/dummy.hpp>
-#include <mapnik/image_compositing.hpp>
-#include <mapnik/image_scaling.hpp>
-#include <mapnik/image_filter.hpp>
-#include <mapnik/image_filter_types.hpp>
-#include <mapnik/parse_path.hpp>
-#include <mapnik/symbolizer_utils.hpp>
-#include <mapnik/transform/transform_processor.hpp>
-#include <mapnik/group/group_rule.hpp>
-#include <mapnik/group/group_layout.hpp>
-#include <mapnik/group/group_symbolizer_properties.hpp>
-#include <mapnik/util/variant.hpp>
-#include <mapnik/util/variant_io.hpp>
-#include <mapnik/warning.hpp>
-MAPNIK_DISABLE_WARNING_PUSH
-#include <mapnik/warning_ignore.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/version.hpp>
-MAPNIK_DISABLE_WARNING_POP
+// #include <mapnik/symbolizer.hpp>
+// #include <mapnik/ptree_helpers.hpp>
+// #include <mapnik/expression_string.hpp>
+// #include <mapnik/raster_colorizer.hpp>
+// #include <mapnik/text/placements/simple.hpp>
+// #include <mapnik/text/placements/list.hpp>
+// #include <mapnik/text/placements/dummy.hpp>
+// #include <mapnik/image_compositing.hpp>
+// #include <mapnik/image_scaling.hpp>
+// #include <mapnik/image_filter.hpp>
+// #include <mapnik/image_filter_types.hpp>
+// #include <mapnik/parse_path.hpp>
+// #include <mapnik/symbolizer_utils.hpp>
+// #include <mapnik/transform_processor.hpp>
+// #include <mapnik/group/group_rule.hpp>
+// #include <mapnik/group/group_layout.hpp>
+// #include <mapnik/group/group_symbolizer_properties.hpp>
+// #include <mapnik/util/variant.hpp>
+// #include <mapnik/util/variant_io.hpp>
+// #pragma GCC diagnostic push
+// #include <mapnik/warning_ignore.hpp>
+// #include <boost/algorithm/string.hpp>
+// #include <boost/property_tree/ptree.hpp>
+// #include <boost/property_tree/xml_parser.hpp>
+// #include <boost/std::optional.hpp>
+// #include <boost/version.hpp>
+// #pragma GCC diagnostic pop
 
 // stl
 #include <iostream>
-#include <optional>
 
 namespace mapnik {
-using boost::property_tree::ptree;
-using std::optional;
-
-void serialize_text_placements(ptree& node, text_placements_ptr const& p, bool explicit_defaults)
+void serialize_text_placements(ptree& node, text_placements_ptr const& p, bool explicit_defaults, int type)
 {
     text_symbolizer_properties dfl;
-    p->defaults.to_xml(node, explicit_defaults, dfl);
+    p->defaults.to_xml(node, explicit_defaults, type, dfl);
     // Known types:
     //   - text_placements_dummy: no handling required
     //   - text_placements_simple: positions string
@@ -89,7 +86,7 @@ void serialize_text_placements(ptree& node, text_placements_ptr const& p, bool e
         for (unsigned i = 0; i < list->size(); ++i)
         {
             ptree& placement_node = node.push_back(ptree::value_type("Placement", ptree()))->second;
-            list->get(i).to_xml(placement_node, explicit_defaults, *dfl2);
+            list->get(i).to_xml(placement_node, explicit_defaults, type, *dfl2);
             dfl2 = &(list->get(i));
         }
     }
@@ -125,174 +122,6 @@ void serialize_raster_colorizer(ptree& sym_node, raster_colorizer_ptr const& col
         }
     }
 }
-
-void serialize_group_symbolizer_properties(ptree& sym_node,
-                                           group_symbolizer_properties_ptr const& properties,
-                                           bool explicit_defaults);
-
-template<typename Meta>
-class serialize_symbolizer_property
-{
-  public:
-    serialize_symbolizer_property(Meta const& meta, boost::property_tree::ptree& node, bool explicit_defaults)
-        : meta_(meta)
-        , node_(node)
-        , explicit_defaults_(explicit_defaults)
-    {}
-
-    void operator()(mapnik::enumeration_wrapper const& e) const
-    {
-        auto const& convert_fun_ptr(std::get<1>(meta_));
-        if (convert_fun_ptr)
-        {
-            node_.put("<xmlattr>." + std::string(std::get<0>(meta_)), convert_fun_ptr(e));
-        }
-    }
-
-    void operator()(path_expression_ptr const& expr) const
-    {
-        if (expr)
-        {
-            node_.put("<xmlattr>." + std::string(std::get<0>(meta_)), path_processor::to_string(*expr));
-        }
-    }
-
-    void operator()(text_placements_ptr const& expr) const
-    {
-        if (expr)
-        {
-            serialize_text_placements(node_, expr, explicit_defaults_);
-        }
-    }
-
-    void operator()(raster_colorizer_ptr const& expr) const
-    {
-        if (expr)
-        {
-            serialize_raster_colorizer(node_, expr, explicit_defaults_);
-        }
-    }
-
-    void operator()(transform_type const& expr) const
-    {
-        if (expr)
-        {
-            node_.put("<xmlattr>." + std::string(std::get<0>(meta_)), transform_processor_type::to_string(*expr));
-        }
-    }
-
-    void operator()(expression_ptr const& expr) const
-    {
-        if (expr)
-        {
-            node_.put("<xmlattr>." + std::string(std::get<0>(meta_)), mapnik::to_expression_string(*expr));
-        }
-    }
-
-    void operator()(dash_array const& dash) const
-    {
-        std::ostringstream os;
-        for (std::size_t i = 0; i < dash.size(); ++i)
-        {
-            os << dash[i].first << "," << dash[i].second;
-            if (i + 1 < dash.size())
-                os << ",";
-        }
-        node_.put("<xmlattr>." + std::string(std::get<0>(meta_)), os.str());
-    }
-
-    void operator()(group_symbolizer_properties_ptr const& properties) const
-    {
-        if (properties)
-        {
-            serialize_group_symbolizer_properties(node_, properties, explicit_defaults_);
-        }
-    }
-
-    template<typename T>
-    void operator()(T const& val) const
-    {
-        node_.put("<xmlattr>." + std::string(std::get<0>(meta_)), val);
-    }
-
-  private:
-    Meta const& meta_;
-    boost::property_tree::ptree& node_;
-    bool explicit_defaults_;
-};
-
-class serialize_symbolizer
-{
-  public:
-    serialize_symbolizer(ptree& r, bool explicit_defaults)
-        : rule_(r)
-        , explicit_defaults_(explicit_defaults)
-    {}
-
-    template<typename Symbolizer>
-    void operator()(Symbolizer const& sym)
-    {
-        ptree& sym_node = rule_.push_back(ptree::value_type(symbolizer_traits<Symbolizer>::name(), ptree()))->second;
-        serialize_symbolizer_properties(sym_node, sym);
-    }
-
-  private:
-
-    void serialize_symbolizer_properties(ptree& sym_node, symbolizer_base const& sym)
-    {
-        for (auto const& prop : sym.properties)
-        {
-            util::apply_visitor(
-              serialize_symbolizer_property<property_meta_type>(get_meta(prop.first), sym_node, explicit_defaults_),
-              prop.second);
-        }
-    }
-    ptree& rule_;
-    bool explicit_defaults_;
-};
-
-class serialize_group_layout
-{
-  public:
-    serialize_group_layout(ptree& parent_node, bool explicit_defaults)
-        : parent_node_(parent_node)
-        , explicit_defaults_(explicit_defaults)
-    {}
-
-    void operator()(simple_row_layout const& layout) const
-    {
-        ptree& layout_node = parent_node_.push_back(ptree::value_type("SimpleLayout", ptree()))->second;
-
-        simple_row_layout dfl;
-        if (explicit_defaults_ || layout.get_item_margin() != dfl.get_item_margin())
-        {
-            set_attr(layout_node, "item-margin", layout.get_item_margin());
-        }
-    }
-
-    void operator()(pair_layout const& layout) const
-    {
-        ptree& layout_node = parent_node_.push_back(ptree::value_type("PairLayout", ptree()))->second;
-
-        pair_layout dfl;
-        if (explicit_defaults_ || layout.get_item_margin() != dfl.get_item_margin())
-        {
-            set_attr(layout_node, "item-margin", layout.get_item_margin());
-        }
-        if (explicit_defaults_ || layout.get_max_difference() != dfl.get_max_difference())
-        {
-            set_attr(layout_node, "max-difference", layout.get_max_difference());
-        }
-    }
-
-    template<typename T>
-    void operator()(T const&) const
-    {}
-
-  private:
-    ptree& parent_node_;
-    bool explicit_defaults_;
-};
 
 void serialize_group_rule(ptree& parent_node, const group_rule& r, bool explicit_defaults)
 {
@@ -405,7 +234,7 @@ void serialize_style(ptree& map_node, std::string const& name, feature_type_styl
         set_attr(style_node, "image-filters-inflate", image_filters_inflate);
     }
 
-    auto&& comp_op = style.comp_op();
+    std::optional<composite_mode_e> comp_op = style.comp_op();
     if (comp_op)
     {
         set_attr(style_node, "comp-op", *comp_op_to_string(*comp_op));
@@ -487,6 +316,24 @@ void serialize_parameters(ptree& map_node, mapnik::parameters const& params)
     }
 }
 
+void serialize_layer_extra_parameters(ptree& layer_node, mapnik::parameters const& params)
+{
+    if (params.size())
+    {
+        ptree& params_node = layer_node.push_back(ptree::value_type("ExtraParameters", ptree()))->second;
+
+        for (auto const& p : params)
+        {
+            boost::property_tree::ptree& param_node =
+              params_node
+                .push_back(boost::property_tree::ptree::value_type("ExtraParameter", boost::property_tree::ptree()))
+                ->second;
+            param_node.put("<xmlattr>.name", p.first);
+            param_node.put_value(p.second);
+        }
+    }
+}
+
 void serialize_layer(ptree& map_node, layer const& lyr, bool explicit_defaults)
 {
     ptree& layer_node = map_node.push_back(ptree::value_type("Layer", ptree()))->second;
@@ -494,17 +341,6 @@ void serialize_layer(ptree& map_node, layer const& lyr, bool explicit_defaults)
     if (lyr.name() != "")
     {
         set_attr(layer_node, "name", lyr.name());
-    }
-
-    auto const comp_op = lyr.comp_op();
-
-    if (comp_op)
-    {
-        set_attr(layer_node, "comp-op", *comp_op_to_string(*comp_op));
-    }
-    else if (explicit_defaults)
-    {
-        set_attr(layer_node, "comp-op", "src-over");
     }
 
     if (lyr.srs() != "")
@@ -524,12 +360,12 @@ void serialize_layer(ptree& map_node, layer const& lyr, bool explicit_defaults)
 
     if (lyr.minimum_scale_denominator() != 0 || explicit_defaults)
     {
-        set_attr(layer_node, "minimum-scale-denominator", lyr.minimum_scale_denominator());
+        set_attr(layer_node, "minimum_scale_denominator", lyr.minimum_scale_denominator());
     }
 
     if (lyr.maximum_scale_denominator() != std::numeric_limits<double>::max() || explicit_defaults)
     {
-        set_attr(layer_node, "maximum-scale-denominator", lyr.maximum_scale_denominator());
+        set_attr(layer_node, "maximum_scale_denominator", lyr.maximum_scale_denominator());
     }
 
     if (lyr.queryable() || explicit_defaults)
@@ -547,13 +383,13 @@ void serialize_layer(ptree& map_node, layer const& lyr, bool explicit_defaults)
         set_attr(layer_node, "group-by", lyr.group_by());
     }
 
-    auto&& buffer_size = lyr.buffer_size();
+    std::optional<int> const& buffer_size = lyr.buffer_size();
     if (buffer_size || explicit_defaults)
     {
         set_attr(layer_node, "buffer-size", *buffer_size);
     }
 
-    optional<box2d<double>> const& maximum_extent = lyr.maximum_extent();
+    std::optional<box2d<double>> const& maximum_extent = lyr.maximum_extent();
     if (maximum_extent)
     {
         std::ostringstream s;
@@ -570,16 +406,12 @@ void serialize_layer(ptree& map_node, layer const& lyr, bool explicit_defaults)
         style_node.put_value(name);
     }
 
+    serialize_layer_extra_parameters(layer_node, lyr.get_extra_parameters());
+
     datasource_ptr datasource = lyr.datasource();
     if (datasource)
     {
         serialize_datasource(layer_node, datasource);
-    }
-
-    // serialize nested layers
-    for (auto const& child : lyr.layers())
-    {
-        serialize_layer(layer_node, child, explicit_defaults);
     }
 }
 
@@ -589,19 +421,19 @@ void serialize_map(ptree& pt, Map const& map, bool explicit_defaults)
 
     set_attr(map_node, "srs", map.srs());
 
-    optional<color> const& c = map.background();
+    std::optional<color> const& c = map.background();
     if (c)
     {
         set_attr(map_node, "background-color", *c);
     }
 
-    optional<std::string> const& font_directory = map.font_directory();
+    std::optional<std::string> const& font_directory = map.font_directory();
     if (font_directory)
     {
         set_attr(map_node, "font-directory", *font_directory);
     }
 
-    optional<std::string> const& image_filename = map.background_image();
+    std::optional<std::string> const& image_filename = map.background_image();
     if (image_filename)
     {
         set_attr(map_node, "background-image", *image_filename);
@@ -631,7 +463,7 @@ void serialize_map(ptree& pt, Map const& map, bool explicit_defaults)
         set_attr(map_node, "base", base_path);
     }
 
-    optional<box2d<double>> const& maximum_extent = map.maximum_extent();
+    std::optional<box2d<double>> const& maximum_extent = map.maximum_extent();
     if (maximum_extent)
     {
         std::ostringstream s;

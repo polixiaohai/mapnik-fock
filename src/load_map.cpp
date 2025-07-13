@@ -667,11 +667,11 @@ void map_parser::parse_layer(Parent& parent, xml_node const& node)
         optional<mapnik::boolean_type> status = node.get_opt_attr<mapnik::boolean_type>("status");
 
         // return early is status is off
-        if (status && !(*status))
-        {
-            node.set_ignore(true);
-            return;
-        }
+        // if (status && !(*status))
+        // {
+        //     node.set_ignore(true);
+        //     return;
+        // }
 
         name = node.get_attr("name", std::string("Unnamed"));
 
@@ -820,6 +820,29 @@ void map_parser::parse_layer(Parent& parent, xml_node const& node)
                 else
                 {
                     lyr.add_style(style_name);
+                }
+            }
+            else if (child.is("ExtraParameters")) // ExtraParameters for layers
+            {
+                parameters & extra_params = lyr.get_extra_parameters();
+                for (auto const& p: child)
+                {
+                    // if (p.is("ExtraParameter"))
+                    // {
+                    //      extra_params[p.get_attr<std::string>("name")] = p.get_text();
+                    // }
+                    if (p.is("ExtraParameter"))
+                    {
+                        std::string val = p.get_text();
+                        std::string key = p.get_attr<std::string>("name");
+                        mapnik::value_bool b;
+                        mapnik::value_integer i;
+                        mapnik::value_double d;
+                        if (mapnik::util::string2int(val,i)) extra_params[key] = i;
+                        else if (mapnik::util::string2bool(val,b)) extra_params[key] = b;
+                        else if (mapnik::util::string2double(val,d)) extra_params[key] = d;
+                        else extra_params[key] = val;
+                    }
                 }
             }
             else if (child.is("Datasource"))

@@ -141,7 +141,7 @@ void text_symbolizer_properties::from_xml(xml_node const& node, fontset_map cons
 }
 
 void text_symbolizer_properties::to_xml(boost::property_tree::ptree& node,
-                                        bool explicit_defaults,
+                                        bool explicit_defaults, int type,
                                         text_symbolizer_properties const& dfl) const
 {
     if (!(expressions.label_placement == dfl.expressions.label_placement) || explicit_defaults)
@@ -206,7 +206,7 @@ void text_symbolizer_properties::to_xml(boost::property_tree::ptree& node,
     }
 
     layout_defaults.to_xml(node, explicit_defaults, dfl.layout_defaults);
-    format_defaults.to_xml(node, explicit_defaults, dfl.format_defaults);
+    format_defaults.to_xml(node, explicit_defaults, type, dfl.format_defaults);
     if (tree_)
         tree_->to_xml(node);
 }
@@ -397,7 +397,7 @@ void format_properties::from_xml(xml_node const& node, fontset_map const& fontse
 }
 
 void format_properties::to_xml(boost::property_tree::ptree& node,
-                               bool explicit_defaults,
+                               bool explicit_defaults, int type,
                                format_properties const& dfl) const
 {
     if (fontset)

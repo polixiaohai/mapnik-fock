@@ -25,6 +25,7 @@
 
 // mapnik
 #include <mapnik/well_known_srs.hpp>
+#include <mapnik/params.hpp>
 #include <mapnik/geometry/box2d.hpp>
 #include <mapnik/image_compositing.hpp>
 
@@ -208,6 +209,10 @@ class MAPNIK_DECL layer
      */
     box2d<double> envelope() const;
 
+    void set_extra_parameters(parameters& params);
+    parameters& get_extra_parameters();
+    parameters const& get_extra_parameters() const;
+
     // compositing
     void set_comp_op(composite_mode_e comp_op);
     std::optional<composite_mode_e> comp_op() const;
@@ -237,6 +242,7 @@ class MAPNIK_DECL layer
     datasource_ptr ds_;
     std::optional<int> buffer_size_;
     std::optional<box2d<double>> maximum_extent_;
+    parameters extra_params_;
     std::optional<composite_mode_e> comp_op_;
     double opacity_;
 };
