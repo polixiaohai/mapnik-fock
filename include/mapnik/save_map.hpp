@@ -25,14 +25,45 @@
 
 // mapnik
 #include <mapnik/config.hpp>
-
-// stl
+#include "font_set.hpp"
 #include <string>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 namespace mapnik {
 class Map;
 
+using boost::property_tree::ptree;
+
+MAPNIK_DECL void serialize_text_placements(ptree& node, text_placements_ptr const& p, bool explicit_defaults, int type);
+
+MAPNIK_DECL void
+  serialize_raster_colorizer(ptree& sym_node, raster_colorizer_ptr const& colorizer, bool explicit_defaults);
+
+MAPNIK_DECL void serialize_group_symbolizer_properties(ptree& sym_node,
+                                                       group_symbolizer_properties_ptr const& properties,
+                                                       bool explicit_defaults);
+
+MAPNIK_DECL void serialize_group_rule(ptree& parent_node, const group_rule& r, bool explicit_defaults);
+
+MAPNIK_DECL void serialize_rule(ptree& style_node, rule const& r, bool explicit_defaults);
+
+MAPNIK_DECL void
+  serialize_style(ptree& map_node, std::string const& name, feature_type_style const& style, bool explicit_defaults);
+
+MAPNIK_DECL void serialize_fontset(ptree& map_node, std::string const& name, font_set const& fontset);
+
+MAPNIK_DECL void serialize_datasource(ptree& layer_node, datasource_ptr datasource);
+
+MAPNIK_DECL void serialize_parameters(ptree& map_node, mapnik::parameters const& params);
+
+MAPNIK_DECL void serialize_layer_extra_parameters(ptree& layer_node, mapnik::parameters const& params);
+
+MAPNIK_DECL void serialize_layer(ptree& map_node, layer const& lyr, bool explicit_defaults);
+
+MAPNIK_DECL void serialize_map(ptree& pt, Map const& map, bool explicit_defaults);
+
 MAPNIK_DECL void save_map(Map const& map, std::string const& filename, bool explicit_defaults = false);
+
 MAPNIK_DECL std::string save_map_to_string(Map const& map, bool explicit_defaults = false);
 } // namespace mapnik
 

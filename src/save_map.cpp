@@ -20,47 +20,36 @@
  *
  *****************************************************************************/
 
-// mapnik
-// #include <mapnik/rule.hpp>
-// #include <mapnik/datasource.hpp>
-// #include <mapnik/layer.hpp>
-// #include <mapnik/feature_type_style.hpp>
-// #include <mapnik/debug.hpp>
-//#include <mapnik/save_map.hpp>
+#include <mapnik/rule.hpp>
+#include <mapnik/datasource.hpp>
+#include <mapnik/layer.hpp>
+#include <mapnik/feature_type_style.hpp>
+#include <mapnik/save_map.hpp>
 #include <mapnik/save_map_serialize.hpp>
 #include <mapnik/map.hpp>
-// #include <mapnik/symbolizer.hpp>
-// #include <mapnik/ptree_helpers.hpp>
-// #include <mapnik/expression_string.hpp>
-// #include <mapnik/raster_colorizer.hpp>
-// #include <mapnik/text/placements/simple.hpp>
-// #include <mapnik/text/placements/list.hpp>
-// #include <mapnik/text/placements/dummy.hpp>
-// #include <mapnik/image_compositing.hpp>
-// #include <mapnik/image_scaling.hpp>
-// #include <mapnik/image_filter.hpp>
-// #include <mapnik/image_filter_types.hpp>
-// #include <mapnik/parse_path.hpp>
-// #include <mapnik/symbolizer_utils.hpp>
-// #include <mapnik/transform_processor.hpp>
-// #include <mapnik/group/group_rule.hpp>
-// #include <mapnik/group/group_layout.hpp>
-// #include <mapnik/group/group_symbolizer_properties.hpp>
-// #include <mapnik/util/variant.hpp>
-// #include <mapnik/util/variant_io.hpp>
-// #pragma GCC diagnostic push
-// #include <mapnik/warning_ignore.hpp>
-// #include <boost/algorithm/string.hpp>
-// #include <boost/property_tree/ptree.hpp>
-// #include <boost/property_tree/xml_parser.hpp>
-// #include <boost/std::optional.hpp>
-// #include <boost/version.hpp>
-// #pragma GCC diagnostic pop
+#include <mapnik/ptree_helpers.hpp>
+#include <mapnik/expression_string.hpp>
+#include <mapnik/raster_colorizer.hpp>
+#include <mapnik/text/placements/simple.hpp>
+#include <mapnik/text/placements/list.hpp>
+#include <mapnik/image_compositing.hpp>
+#include <mapnik/image_filter.hpp>
+#include <mapnik/image_filter_types.hpp>
+#include <mapnik/group/group_rule.hpp>
+#include <mapnik/group/group_symbolizer_properties.hpp>
+#include <mapnik/util/variant.hpp>
+#include <mapnik/util/variant_io.hpp>
+#pragma GCC diagnostic push
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/version.hpp>
+#pragma GCC diagnostic pop
 
 // stl
 #include <iostream>
 
 namespace mapnik {
+using namespace  boost::property_tree;
 void serialize_text_placements(ptree& node, text_placements_ptr const& p, bool explicit_defaults, int type)
 {
     text_symbolizer_properties dfl;

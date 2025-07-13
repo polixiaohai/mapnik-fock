@@ -61,5 +61,6 @@ test/visual/run
 # cmake 
 build
 .vs
+vcpkg_installed/
 
 CMakeUserPresets.json

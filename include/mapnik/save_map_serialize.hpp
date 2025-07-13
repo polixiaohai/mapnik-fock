@@ -1,9 +1,17 @@
 #ifndef MAPNIK_SAVE_MAP_SERIALIZE_HPP
 #define MAPNIK_SAVE_MAP_SERIALIZA_HPP
 
-#include <mapnik/save_map.hpp>
+#include "parse_path.hpp"
+#include "ptree_helpers.hpp"
+#include "symbolizer.hpp"
+#include "symbolizer_utils.hpp"
+#include "transform/transform_processor.hpp"
 #include <mapnik/util/conversions.hpp>
 #include <typeinfo>
+#include <boost/property_tree/ptree.hpp>
+#include <mapnik/enumeration.hpp>
+#include <mapnik/symbolizer_base.hpp>
+#include <mapnik/save_map.hpp>
 
 namespace mapnik {
 template<typename Meta>
